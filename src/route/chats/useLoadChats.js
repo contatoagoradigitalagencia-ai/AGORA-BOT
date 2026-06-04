@@ -1,39 +1,80 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { apiList } from "../../api/client.js";
+
+function normalizeText(message) {
+	if (!message) return "Sem mensagens";
+	if (message.text) return message.text;
+	if (message.type && message.type !== "text") return message.type;
+	return "Sem mensagens";
+}
+
+function normalizeChats(conversations, contacts, messages) {
+	const contactsById = new Map(contacts.map((contact) => [String(contact._id), contact]));
+	const lastMessageByConversation = new Map();
+
+	for (const message of messages) {
+		const conversationId = String(message.conversationId || "");
+		if (!conversationId || lastMessageByConversation.has(conversationId)) continue;
+		lastMessageByConversation.set(conversationId, message);
+	}
+
+	return conversations.map((conversation) => {
+		const contact = contactsById.get(String(conversation.contactId)) || {};
+		const lastMessage = lastMessageByConversation.get(String(conversation._id));
+
+		return {
+			id: conversation._id,
+			phone: contact.phone || String(conversation._id),
+			contactName: contact.name || "Sem nome",
+			lastMessage: {
+				humanViewed: true,
+				type: lastMessage?.type || "text",
+				text: normalizeText(lastMessage),
+				timestamp: lastMessage?.occurredAt || conversation.lastMessageAt || conversation.updatedAt || conversation.createdAt,
+			},
+		};
+	});
+}
 
 /**
  * @author VAMPETA
  * @brief HOOK QUE CONTROLA O LOAD DAS CONVERSAS (CURSOR COMPOSTO)
  * @param {Object} socket SOCKET DE CONEXAO COM O BACK END
  */
-export function useLoadChats(socket) {
+export function useLoadChats() {
 	const [chats, setChats] = useState(null);
 	const [error, setError] = useState(false);
 	const [loadingMore, setLoadingMore] = useState(false);
-	const [hasMore, setHasMore] = useState(true);
-	const cursorRef = useRef(null);
+	const [hasMore, setHasMore] = useState(false);
 
 	useEffect(() => {
-		if (!socket) return ;
-		socket.emit("chats:load_chats", {}, (res) => {
-			if (!res || res.error) return (setError(true));
-			setChats(res.chats);
-			setHasMore(res.hasMore);
-			cursorRef.current = res.nextCursor;
+		let active = true;
+
+		Promise.all([
+			apiList("/conversations"),
+			apiList("/contacts"),
+			apiList("/messages"),
+		]).then(([conversations, contacts, messages]) => {
+			if (!active) return ;
+			setChats(normalizeChats(conversations, contacts, messages));
+			setHasMore(false);
+		}).catch(() => {
+			if (!active) return ;
+			setError(true);
+			setChats([]);
+			setHasMore(false);
 		});
-	}, [socket]);
+
+		return (() => {
+			active = false;
+		});
+	}, []);
+
 	const loadMore = useCallback(() => {
-		if (!socket || loadingMore || !hasMore) return ;
+		if (loadingMore || !hasMore) return ;
 		setLoadingMore(true);
-		socket.emit("chats:load_chats", { dateLastChat: cursorRef.current }, (res) => {
-			if (!res || res.error || !Array.isArray(res.chats)) {
-				setLoadingMore(false);
-				return ;
-			}
-			setChats((prev) => [...(prev ?? []), ...res.chats]);
-			setHasMore(res.hasMore);
-			cursorRef.current = res.nextCursor;
-			setLoadingMore(false);
-		});
-	}, [socket, loadingMore, hasMore]);
+		setLoadingMore(false);
+	}, [loadingMore, hasMore]);
+
 	return ({ chats, setChats, error, loadMore, hasMore, loadingMore });
 }

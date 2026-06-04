@@ -81,6 +81,7 @@ export function useChatsRealTime(socket, setChats) {
 	const navigate = useNavigate();
 
 	useEffect(() => {
+		if (!socket) return ;
 		const onNewMessage = handleNewMessage(setChats, navigate);
 		socket.on("chat:new_message", onNewMessage);
 		return (() => {

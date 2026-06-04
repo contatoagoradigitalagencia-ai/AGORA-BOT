@@ -43,7 +43,7 @@ function TypeMessage({ type }) {
  * @param {Object} socket SOCKET DE CONEXAO COM O BACK END
 */
 export default function Body({ socket }) {
-	const { chats, setChats, error, loadMore, hasMore, loadingMore } = useLoadChats(socket);
+	const { chats, setChats, error, loadMore, hasMore, loadingMore } = useLoadChats();
 	const { containerRef, handleScroll } = useScroll({ hasMore, loadingMore, loadMore });
 
 	useChatsRealTime(socket, setChats);
@@ -53,7 +53,7 @@ export default function Body({ socket }) {
 		return (
 			<div className="flex flex-col items-center justify-center flex-1 overflow-y-auto">
 				<i className="bi bi-chat-right-text text-white text-5xl" />
-				<p className="text-white">Nenhum histórico de conversa</p>
+				<p className="text-white">Nenhuma conversa encontrada</p>
 			</div>
 		);
 	}
@@ -62,7 +62,7 @@ export default function Body({ socket }) {
 			{chats.map((chat) => (
 				<Link className={`flex flex-col justify-center w-full h-20 my-3 px-6 ${(!chat.lastMessage.humanViewed) ? "bg-zinc-600" : "bg-zinc-900"} rounded border border-zinc-800 text-white hover:bg-orange-500 transition`} key={chat.phone} to={`/chat/${chat.phone}`}>
 					<div className="flex justify-between">
-						<p>{chat.phone.replace(/^55(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3")}</p>
+						<p>{(chat.contactName && chat.contactName !== "Sem nome") ? chat.contactName : chat.phone.replace(/^55(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3")}</p>
 						{!chat.lastMessage.humanViewed && <i className="bi bi-chat-left-dots" />}
 					</div>
 					<div className="flex justify-between items-center">
