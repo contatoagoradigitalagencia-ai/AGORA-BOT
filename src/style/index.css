@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+html, body {
+	overscroll-behavior: none;
+}
+
+* {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+	display: none;
+}
+
+@layer utilities {
+	@keyframes toastIn {
+		from {
+			opacity: 0;
+			transform: translateY(-20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+	.animate-toastIn {
+		animation: toastIn 0.3s ease-out forwards;
+	}
+}
+
+@layer utilities {
+	@keyframes toastOut {
+		from {
+			opacity: 1;
+			transform: translateY(0);
+		}
+		to {
+			opacity: 0;
+			transform: translateY(-20px);
+		}
+	}
+	.animate-toastOut {
+		animation: toastOut 0.2s ease-in forwards;
+		will-change: transform, opacity;
+	}
+}
+
+@layer utilities {
+	@keyframes slideInLeft {
+		from {
+			transform: translateX(-100%);
+		}
+		to {
+			transform: translateX(0);
+		}
+	}
+	.animate-slideInLeft {
+		animation: slideInLeft 0.2s ease-out;
+	}
+}
+
+@layer utilities {
+	@keyframes slideInRight {
+		from {
+			transform: translateX(100%);
+		}
+		to {
+			transform: translateX(0);
+		}
+	}
+	.animate-slideInRight {
+		animation: slideInRight 0.2s ease-out;
+	}
+}
+
+@layer utilities {
+	@keyframes slideOutRight {
+		from {
+			transform: translateX(0);
+		}
+		to {
+			transform: translateX(100%);
+		}
+	}
+	.animate-slideOutRight {
+		animation: slideOutRight 0.2s ease-in;
+	}
+}
+
+input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+input[type="number"] {
+	-moz-appearance: textfield;
+}
