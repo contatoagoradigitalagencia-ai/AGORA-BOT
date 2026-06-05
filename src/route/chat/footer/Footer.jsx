@@ -1,30 +1,28 @@
 import { useReplyWindow } from "./useReplyWindow.js";
-
 import ChatComposer from "./chatComposer/ChatComposer.jsx";
 
-/**
- * @author VAMPETA
- * @brief COMPONENTE RESPONSAVEL POR INFORMAR QUE A JANELA DE RESPOSTA PASSOU DAS 24 HORAS
-*/
-function OutsideResponseWindow() {
+function MetaWindowExpired() {
 	return (
-		<div className="flex items-center justify-center h-14 border-zinc-800 border-t shrink-0">
-			<p className="text-red-500">Fora da janela de 24 horas</p>
+		<div className="flex flex-col items-center gap-2 px-4 py-3 border-t border-zinc-800 bg-zinc-950 shrink-0">
+			<div className="flex items-center gap-2 text-yellow-400 text-xs">
+				<i className="bi bi-clock-history" />
+				<span>Fora da janela de 24h da Meta. Use um template aprovado para iniciar nova conversa.</span>
+			</div>
+			<button
+				className="px-4 py-1.5 rounded-lg border border-yellow-500/30 text-yellow-400 text-xs hover:bg-yellow-500/10 transition"
+				onClick={() => window.open("https://business.facebook.com/wa/manage/message-templates/", "_blank")}
+			>
+				Gerenciar templates Meta →
+			</button>
 		</div>
 	);
 }
 
-/**
- * @author VAMPETA
- * @brief FOOTER DO CHAT
- * @param {Object} socket SOCKET DE CONEXAO COM O BACK END
-*/
 export default function Footer({ socket, replyTo, setReplyTo }) {
-	const { replyWindow } = useReplyWindow(socket);
+	const { replyWindow, windowState } = useReplyWindow(socket);
+	const isMetaExpired = windowState?.provider === "meta" && !replyWindow;
 
-	return (
-		<>
-			{(replyWindow) ? <ChatComposer socket={socket} replyTo={replyTo} setReplyTo={setReplyTo} /> : <OutsideResponseWindow />}
-		</>
-	);
+	if (isMetaExpired) return <MetaWindowExpired />;
+
+	return <ChatComposer socket={socket} replyTo={replyTo} setReplyTo={setReplyTo} />;
 }
