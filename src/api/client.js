@@ -108,3 +108,18 @@ export async function apiList(path, config = {}) {
 		throw error;
 	}
 }
+
+export async function apiDelete(path, config = {}) {
+	try {
+		const response = await axios.delete(`${API_BASE_URL}${path}`, {
+			...config,
+			headers: {
+				...authHeaders(),
+				...(config.headers || {}),
+			},
+		});
+		return response.data;
+	} catch (error) {
+		throw normalizeError(error);
+	}
+}
