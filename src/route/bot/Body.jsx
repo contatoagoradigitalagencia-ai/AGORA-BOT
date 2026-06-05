@@ -8,7 +8,19 @@ import GroupSettings from "./GroupSettings.jsx";
 function AccountInfo({ account }) {
   const provider = account?.provider?.toUpperCase() || "—";
   const phone = account?.phoneNumber || account?.label || "—";
-  const status = account?.status || "—";
+
+  // connectionStatus vem da verificação em tempo real no backend
+  const conn = account?.connectionStatus; // "connected" | "disconnected" | "unknown" | undefined
+
+  const badge = conn === "connected"
+    ? { label: "Conectado",     cls: "bg-green-900 text-green-300"  }
+    : conn === "disconnected"
+    ? { label: "Desconectado",  cls: "bg-red-900 text-red-300"      }
+    : conn === "unknown"
+    ? { label: "Sem resposta",  cls: "bg-yellow-900 text-yellow-300" }
+    : account?.status === "active"
+    ? { label: "Ativa",         cls: "bg-green-900 text-green-300"  }
+    : { label: "Inativa",       cls: "bg-zinc-700 text-zinc-400"    };
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 flex items-center justify-between gap-4">
@@ -16,10 +28,8 @@ function AccountInfo({ account }) {
         <h2 className="text-base font-semibold text-zinc-100">Conta WhatsApp</h2>
         <p className="text-sm text-zinc-400 mt-1">{provider} · {phone}</p>
       </div>
-      <span className={`text-xs font-medium px-3 py-1 rounded-full ${
-        status === "active" ? "bg-green-900 text-green-300" : "bg-zinc-700 text-zinc-400"
-      }`}>
-        {status === "active" ? "Ativa" : status}
+      <span className={`text-xs font-medium px-3 py-1 rounded-full ${badge.cls}`}>
+        {badge.label}
       </span>
     </div>
   );
