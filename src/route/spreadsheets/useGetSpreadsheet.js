@@ -1,25 +1,26 @@
 import { useEffect, useState, useCallback } from "react";
 import { apiList, apiPost, apiPatch, apiDelete } from "../../api/client.js";
 
-const ENDPOINTS = {
-	products: "/products",
-	services: "/services",
-	plans:    "/plans",
+export const SECTIONS = {
+	products: { key: "products", endpoint: "/products", label: "Produtos",  singular: "Produto"  },
+	services: { key: "services", endpoint: "/services", label: "Serviços",  singular: "Serviço"  },
+	plans:    { key: "plans",    endpoint: "/plans",    label: "Planos",    singular: "Plano"    },
 };
 
-const EMPTY_CATALOG = { products: [], services: [], plans: [] };
+const EMPTY = { products: [], services: [], plans: [] };
 
 export function useCatalog() {
-	const [catalog, setCatalog] = useState(EMPTY_CATALOG);
-	const [error,   setError]   = useState(false);
-	const [loading, setLoading] = useState(true);
+	const [catalog,  setCatalog]  = useState(EMPTY);
+	const [error,    setError]    = useState(false);
+	const [loading,  setLoading]  = useState(true);
 
 	const fetchAll = useCallback(async () => {
+		setLoading(true);
 		try {
 			const [products, services, plans] = await Promise.all([
-				apiList(ENDPOINTS.products),
-				apiList(ENDPOINTS.services),
-				apiList(ENDPOINTS.plans),
+				apiList(SECTIONS.products.endpoint),
+				apiList(SECTIONS.services.endpoint),
+				apiList(SECTIONS.plans.endpoint),
 			]);
 			setCatalog({ products, services, plans });
 			setError(false);
@@ -32,28 +33,40 @@ export function useCatalog() {
 
 	useEffect(() => { fetchAll(); }, [fetchAll]);
 
-	async function createItem(section, form) {
-		const created = await apiPost(ENDPOINTS[section.key], form);
-		const item = created?.data || created;
-		setCatalog(prev => ({ ...prev, [section.key]: [item, ...prev[section.key]] }));
+	async function createItem(sectionKey, form) {
+		const res  = await apiPost(SECTIONS[sectionKey].endpoint, form);
+		const item = res?.data || res;
+		setCatalog(prev => ({ ...prev, [sectionKey]: [item, ...prev[sectionKey]] }));
+		return item;
 	}
 
-	async function updateItem(section, id, form) {
-		const updated = await apiPatch(`${ENDPOINTS[section.key]}/${id}`, form);
-		const item = updated?.data || updated;
+	async function updateItem(sectionKey, id, form) {
+		const res  = await apiPatch(`${SECTIONS[sectionKey].endpoint}/${id}`, form);
+		const item = res?.data || res;
 		setCatalog(prev => ({
 			...prev,
-			[section.key]: prev[section.key].map(i => i._id === id ? item : i),
+			[sectionKey]: prev[sectionKey].map(i => (i._id === id ? item : i)),
+		}));
+		return item;
+	}
+
+	async function deleteItem(sectionKey, id) {
+		await apiDelete(`${SECTIONS[sectionKey].endpoint}/${id}`);
+		setCatalog(prev => ({
+			...prev,
+			[sectionKey]: prev[sectionKey].filter(i => i._id !== id),
 		}));
 	}
 
-	async function deleteItem(section, id) {
-		await apiDelete(`${ENDPOINTS[section.key]}/${id}`);
-		setCatalog(prev => ({
-			...prev,
-			[section.key]: prev[section.key].filter(i => i._id !== id),
-		}));
+	async function duplicateItem(sectionKey, item) {
+		const { _id, id, createdAt, updatedAt, __v, ...rest } = item;
+		const copy = { ...rest, name: `${rest.name} (cópia)`, active: false };
+		return createItem(sectionKey, copy);
 	}
 
-	return { catalog, loading, error, createItem, updateItem, deleteItem };
+	async function toggleActive(sectionKey, item) {
+		return updateItem(sectionKey, item._id, { active: !item.active });
+	}
+
+	return { catalog, loading, error, createItem, updateItem, deleteItem, duplicateItem, toggleActive, refetch: fetchAll };
 }
