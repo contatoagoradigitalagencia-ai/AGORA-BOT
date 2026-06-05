@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useCatalog, SECTIONS } from "./useGetSpreadsheet.js";
 import Error  from "../../screens/Error.jsx";
 import Load   from "../../screens/Load.jsx";
@@ -91,13 +92,13 @@ function Drawer({ open, onClose, sectionKey, item, onCreate, onUpdate }) {
 
 	if (!open) return null;
 
-	return (
+	return createPortal(
 		<>
 			{/* Overlay */}
-			<div className="fixed inset-0 z-40 bg-black/60" onClick={onClose} />
+			<div className="fixed inset-0 z-[9998] bg-black/60" onClick={onClose} />
 
 			{/* Drawer */}
-			<div className="fixed inset-y-0 right-0 z-50 flex flex-col bg-zinc-900 border-l border-zinc-700 shadow-2xl w-full sm:w-[480px]">
+			<div className="fixed inset-y-0 right-0 z-[9999] flex flex-col bg-zinc-900 border-l border-zinc-700 shadow-2xl w-full sm:w-[480px]">
 				{/* Header */}
 				<div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800 shrink-0">
 					<h2 className="text-base font-semibold">
@@ -174,7 +175,8 @@ function Drawer({ open, onClose, sectionKey, item, onCreate, onUpdate }) {
 					</div>
 				</div>
 			</div>
-		</>
+		</>,
+		document.body
 	);
 }
 
