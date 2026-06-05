@@ -17,9 +17,14 @@ export default function Home() {
 					<img className="w-8 h-8 animate-spin [animation-duration:5s]" src="/logo.png" />
 					<span>Agora Digital</span>
 				</div>
-				<Link className="px-4 py-2 bg-orange-500 text-black rounded-lg hover:bg-orange-400 transition" to={(phone && idPhone && token) ? "/dashboard" : "/login"} >
-					{(phone && idPhone && token) ? "Dashboard" : "Login"}
-				</Link>
+				<div className="flex gap-2">
+					<Link className="px-4 py-2 bg-orange-500 text-black rounded-lg hover:bg-orange-400 transition" to={(phone && idPhone && token) ? "/dashboard" : "/login"}>
+						{(phone && idPhone && token) ? "Dashboard" : "Login"}
+					</Link>
+					{(phone && idPhone && token) && (
+						<Link className="px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg hover:bg-zinc-800 transition" to="/admin">Admin</Link>
+					)}
+				</div>
 			</header>
 			<section className="flex flex-col items-center justify-center text-center px-6 py-20 gap-6">
 				<h1 className="text-3xl md:text-5xl font-bold max-w-3xl leading-tight">Automatize seu atendimento no WhatsApp de forma simples e eficiente</h1>
