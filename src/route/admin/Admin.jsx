@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { Component, useEffect, useMemo, useState } from "react";
 import { SideBar, Header } from "../../utils/components/Sidebar.jsx";
 import { API_BASE_URL } from "../../api/client.js";
 import { useAdmin } from "./useAdmin.js";
 import AdminDrawer from "./AdminDrawer.jsx";
 import Load from "../../screens/Load.jsx";
-import Error from "../../screens/Error.jsx";
 import toast from "react-hot-toast";
 
 const STATUS_MAP = {
@@ -32,8 +31,9 @@ const TABS = [
 ];
 
 function fmtDate(value) {
-  if (!value) return "-";
-  const date = new Date(value);
+  const raw = value?.createdAt || value?.timestamp || value?.date || value?.occurredAt || value || null;
+  if (!raw) return "-";
+  const date = new Date(raw);
   if (Number.isNaN(date.valueOf())) return "-";
   return date.toLocaleString("pt-BR", {
     day: "2-digit",
@@ -52,8 +52,38 @@ function idOf(item) {
   return item?._id || item?.id || "";
 }
 
+function asArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function textOf(value) {
+  return String(value || "").toLowerCase();
+}
+
 function statusBadge(status) {
   return STATUS_MAP[status] || STATUS_MAP.pending;
+}
+
+class LocalTabBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("[ADMIN ERROR]", error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <EmptyState title="Esta aba encontrou um erro, mas o Admin continua funcionando." />;
+    }
+    return this.props.children;
+  }
 }
 
 function StatCard({ label, value, hint }) {
@@ -138,11 +168,12 @@ function OrganizationForm({ editing, onCreate, onUpdate, onCancel }) {
 }
 
 function OrganizationsTab({ organizations, onCreate, onUpdate, onDeactivate }) {
+  const items = asArray(organizations).filter(Boolean);
   const [editing, setEditing] = useState(null);
   const [viewing, setViewing] = useState(null);
 
   async function deactivate(org, label = "suspender") {
-    if (!confirm(`${label === "excluir" ? "Excluir/inativar" : "Suspender"} "${org.name}"?`)) return;
+    if (!confirm(`${label === "excluir" ? "Excluir/inativar" : "Suspender"} "${org?.name || "organizacao"}"?`)) return;
     try {
       await onDeactivate(idOf(org));
       toast.success("Organizacao inativada.");
@@ -167,11 +198,11 @@ function OrganizationsTab({ organizations, onCreate, onUpdate, onDeactivate }) {
         </div>
       )}
 
-      {organizations.length === 0 ? (
+      {items.length === 0 ? (
         <EmptyState title="Nenhuma organizacao cadastrada." />
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
-          {organizations.map((org) => {
+          {items.map((org) => {
             const st = statusBadge(org.status);
             return (
               <div key={idOf(org)} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
@@ -205,7 +236,7 @@ function OrganizationsTab({ organizations, onCreate, onUpdate, onDeactivate }) {
   );
 }
 
-function IntegrationCard({ item, onEdit, onDelete, onTest, onActivate, onSync, onRestartWebhook }) {
+function IntegrationCard({ item = {}, onEdit, onDelete, onTest, onActivate, onSync, onRestartWebhook }) {
   const [busy, setBusy] = useState("");
   const st = statusBadge(item.status);
   const operationalClass = HEALTH_MAP[item.operationalStatus] || HEALTH_MAP.OFFLINE;
@@ -256,18 +287,19 @@ function IntegrationCard({ item, onEdit, onDelete, onTest, onActivate, onSync, o
 }
 
 function IntegrationsTab({ organizations, integrations, create, update, remove, testConnection, activateIntegration, syncIntegration, restartWebhook }) {
+  const items = asArray(integrations).filter(Boolean);
   const [drawer, setDrawer] = useState(false);
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 
-  const filtered = integrations.filter((item) => {
+  const filtered = items.filter((item) => {
     const q = search.toLowerCase();
     const matchSearch = !q
-      || item.clientName?.toLowerCase().includes(q)
-      || item.companyName?.toLowerCase().includes(q)
-      || item.organization?.name?.toLowerCase().includes(q)
-      || item.phoneNumber?.toLowerCase().includes(q);
+      || textOf(item?.clientName).includes(q)
+      || textOf(item?.companyName).includes(q)
+      || textOf(item?.organization?.name).includes(q)
+      || textOf(item?.phoneNumber).includes(q);
     const matchFilter = filter === "all" || item.provider === filter || item.status === filter || item.operationalStatus === filter;
     return matchSearch && matchFilter;
   });
@@ -293,7 +325,7 @@ function IntegrationsTab({ organizations, integrations, create, update, remove, 
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState title={integrations.length === 0 ? "Nenhuma integracao cadastrada." : "Nenhum resultado encontrado."} />
+        <EmptyState title={items.length === 0 ? "Nenhuma integracao cadastrada." : "Nenhum resultado encontrado."} />
       ) : (
         <div className="grid gap-4 2xl:grid-cols-2">
           {filtered.map((item) => (
@@ -357,7 +389,7 @@ function OverviewTab({ overview }) {
   );
 }
 
-function AiConfigCard({ item, onSave, onRestart, onTestPrompt }) {
+function AiConfigCard({ item = {}, onSave, onRestart, onTestPrompt }) {
   const [form, setForm] = useState({ model: item.model || "", temperature: item.temperature ?? 0.3, dailyLimit: item.dailyLimit || 0, enabled: item.enabled });
   const [prompt, setPrompt] = useState("");
   const [answer, setAnswer] = useState("");
@@ -420,22 +452,24 @@ function AiConfigCard({ item, onSave, onRestart, onTestPrompt }) {
 }
 
 function AiTab({ aiConfigs, updateAi, restartAi, testPrompt }) {
-  if (aiConfigs.length === 0) return <EmptyState title="Nenhuma configuracao de IA encontrada." />;
+  const items = asArray(aiConfigs).filter(Boolean);
+  if (items.length === 0) return <EmptyState title="Nenhuma configuracao de IA encontrada." />;
   return (
     <div className="grid gap-4">
-      {aiConfigs.map((item) => (
-        <AiConfigCard key={item.id} item={item} onSave={updateAi} onRestart={restartAi} onTestPrompt={testPrompt} />
+      {items.map((item, index) => (
+        <AiConfigCard key={item?.id || index} item={item} onSave={updateAi} onRestart={restartAi} onTestPrompt={testPrompt} />
       ))}
     </div>
   );
 }
 
 function HealthTab({ health }) {
-  if (health.length === 0) return <EmptyState title="Nenhum status operacional encontrado." />;
+  const items = asArray(health).filter(Boolean);
+  if (items.length === 0) return <EmptyState title="Nenhum status operacional encontrado." />;
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {health.map((item) => (
-        <div key={item.key} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+      {items.map((item, index) => (
+        <div key={item?.key || index} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
           <div className="flex items-start justify-between gap-3">
             <p className="font-semibold text-zinc-100">{item.label}</p>
             <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${HEALTH_MAP[item.status] || HEALTH_MAP.OFFLINE}`}>{item.status}</span>
@@ -448,6 +482,8 @@ function HealthTab({ health }) {
 }
 
 function LogsTab({ logs, organizations, onFilter }) {
+  const items = asArray(logs).filter(Boolean);
+  const orgItems = asArray(organizations).filter(Boolean);
   const [filters, setFilters] = useState({ startDate: "", endDate: "", organizationId: "", type: "", provider: "" });
   const types = ["audit", "log", "error", "ai", "integrations", "organizations", "ingestion", "webhook"];
 
@@ -467,7 +503,7 @@ function LogsTab({ logs, organizations, onFilter }) {
         <input className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm outline-none focus:border-orange-500" type="date" value={filters.endDate} onChange={(e) => setFilters((p) => ({ ...p, endDate: e.target.value }))} />
         <select className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm outline-none focus:border-orange-500" value={filters.organizationId} onChange={(e) => setFilters((p) => ({ ...p, organizationId: e.target.value }))}>
           <option value="">Todas organizacoes</option>
-          {organizations.map((org) => <option key={idOf(org)} value={idOf(org)}>{org.name}</option>)}
+          {orgItems.map((org) => <option key={idOf(org)} value={idOf(org)}>{org?.name || idOf(org)}</option>)}
         </select>
         <select className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm outline-none focus:border-orange-500" value={filters.type} onChange={(e) => setFilters((p) => ({ ...p, type: e.target.value }))}>
           <option value="">Todos tipos</option>
@@ -481,13 +517,13 @@ function LogsTab({ logs, organizations, onFilter }) {
         <button className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-black">Filtrar</button>
       </form>
 
-      {logs.length === 0 ? (
+      {items.length === 0 ? (
         <EmptyState title="Nenhum log encontrado." />
       ) : (
         <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
-          {logs.map((item, index) => (
+          {items.map((item, index) => (
             <div key={item.id || index} className="grid gap-2 border-b border-zinc-800 p-4 text-xs last:border-b-0 xl:grid-cols-[130px_150px_150px_110px_110px_1fr]">
-              <span className="text-zinc-500">{fmtDate(item.occurredAt || item.date)}</span>
+              <span className="text-zinc-500">{fmtDate(item?.createdAt || item?.timestamp || item?.date || item?.occurredAt || null)}</span>
               <span className="text-zinc-300">{item.organization?.name || item.organizationId || "-"}</span>
               <span className="text-zinc-400">{item.whatsappAccount?.label || item.whatsappAccount?.phoneNumber || "-"}</span>
               <span className="text-zinc-400">{item.module || "-"}</span>
@@ -506,14 +542,13 @@ function AdminBody() {
   const [tab, setTab] = useState("overview");
 
   const counts = useMemo(() => ({
-    organizations: admin.organizations.length,
-    integrations: admin.integrations.length,
-    ai: admin.aiConfigs.length,
-    health: admin.health.length,
-    logs: admin.logs.length,
-  }), [admin.organizations.length, admin.integrations.length, admin.aiConfigs.length, admin.health.length, admin.logs.length]);
+    organizations: asArray(admin.organizations).length,
+    integrations: asArray(admin.integrations).length,
+    ai: asArray(admin.aiConfigs).length,
+    health: asArray(admin.health).length,
+    logs: asArray(admin.logs).length,
+  }), [admin.organizations, admin.integrations, admin.aiConfigs, admin.health, admin.logs]);
 
-  if (admin.error) return <Error />;
   if (admin.loading) return <Load />;
 
   return (
@@ -532,26 +567,28 @@ function AdminBody() {
         ))}
       </div>
 
-      {tab === "overview" && <OverviewTab overview={admin.overview} />}
-      {tab === "organizations" && (
-        <OrganizationsTab organizations={admin.organizations} onCreate={admin.createOrganization} onUpdate={admin.updateOrganization} onDeactivate={admin.deactivateOrganization} />
-      )}
-      {tab === "integrations" && (
-        <IntegrationsTab
-          organizations={admin.organizations}
-          integrations={admin.integrations}
-          create={admin.create}
-          update={admin.update}
-          remove={admin.remove}
-          testConnection={admin.testConnection}
-          activateIntegration={admin.activateIntegration}
-          syncIntegration={admin.syncIntegration}
-          restartWebhook={admin.restartWebhook}
-        />
-      )}
-      {tab === "ai" && <AiTab aiConfigs={admin.aiConfigs} updateAi={admin.updateAi} restartAi={admin.restartAi} testPrompt={admin.testPrompt} />}
-      {tab === "health" && <HealthTab health={admin.health} />}
-      {tab === "logs" && <LogsTab logs={admin.logs} organizations={admin.organizations} onFilter={admin.loadLogs} />}
+      <LocalTabBoundary key={tab}>
+        {tab === "overview" && <OverviewTab overview={admin.overview} />}
+        {tab === "organizations" && (
+          <OrganizationsTab organizations={admin.organizations} onCreate={admin.createOrganization} onUpdate={admin.updateOrganization} onDeactivate={admin.deactivateOrganization} />
+        )}
+        {tab === "integrations" && (
+          <IntegrationsTab
+            organizations={admin.organizations}
+            integrations={admin.integrations}
+            create={admin.create}
+            update={admin.update}
+            remove={admin.remove}
+            testConnection={admin.testConnection}
+            activateIntegration={admin.activateIntegration}
+            syncIntegration={admin.syncIntegration}
+            restartWebhook={admin.restartWebhook}
+          />
+        )}
+        {tab === "ai" && <AiTab aiConfigs={admin.aiConfigs} updateAi={admin.updateAi} restartAi={admin.restartAi} testPrompt={admin.testPrompt} />}
+        {tab === "health" && <HealthTab health={admin.health} />}
+        {tab === "logs" && <LogsTab logs={admin.logs} organizations={admin.organizations} onFilter={admin.loadLogs} />}
+      </LocalTabBoundary>
     </div>
   );
 }

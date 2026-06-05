@@ -3,6 +3,45 @@ import { apiGet, apiList, apiPost, apiPatch, apiDelete } from "../../api/client.
 
 const BASE = "/admin";
 const INTEGRATIONS = `${BASE}/integrations`;
+const DEFAULT_OVERVIEW = {
+  organizationsCount: 0,
+  activeOrganizationsCount: 0,
+  whatsappAccounts: 0,
+  conversationsCount: 0,
+  messagesCount: 0,
+  integrations: { active: 0, pending: 0, error: 0, zapi: 0, meta: 0 },
+  latestError: null,
+  latestTest: null,
+};
+
+function asArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function dataObject(value, fallback = {}) {
+  if (value?.data && typeof value.data === "object" && !Array.isArray(value.data)) return value.data;
+  if (value && typeof value === "object" && !Array.isArray(value)) return value;
+  return fallback;
+}
+
+async function safeList(path, fallback = []) {
+  try {
+    return asArray(await apiList(path));
+  } catch (error) {
+    console.error("[ADMIN API ERROR]", path, error);
+    return fallback;
+  }
+}
+
+async function safeGet(path, fallback = null) {
+  try {
+    const body = await apiGet(path);
+    return dataObject(body, fallback);
+  } catch (error) {
+    console.error("[ADMIN API ERROR]", path, error);
+    return fallback;
+  }
+}
 
 export function useAdmin() {
   const [overview,     setOverview]     = useState(null);
@@ -11,33 +50,31 @@ export function useAdmin() {
   const [logs,         setLogs]         = useState([]);
   const [aiConfigs,    setAiConfigs]    = useState([]);
   const [health,       setHealth]       = useState([]);
+  const [sectionErrors, setSectionErrors] = useState({});
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    try {
-      const [overviewBody, organizationData, integrationData, logData, aiData, healthData] = await Promise.all([
-        apiGet(`${BASE}/overview`),
-        apiList(`${BASE}/organizations`),
-        apiList(INTEGRATIONS),
-        apiList(`${BASE}/logs`),
-        apiList(`${BASE}/ai`),
-        apiList(`${BASE}/health`),
-      ]);
+    const errors = {};
+    const [overviewData, organizationData, integrationData, logData, aiData, healthData] = await Promise.all([
+      safeGet(`${BASE}/overview`, DEFAULT_OVERVIEW).then((data) => data || DEFAULT_OVERVIEW),
+      safeList(`${BASE}/organizations`).catch(() => { errors.organizations = true; return []; }),
+      safeList(INTEGRATIONS).catch(() => { errors.integrations = true; return []; }),
+      safeList(`${BASE}/logs`).catch(() => { errors.logs = true; return []; }),
+      safeList(`${BASE}/ai`).catch(() => { errors.ai = true; return []; }),
+      safeList(`${BASE}/health`).catch(() => { errors.health = true; return []; }),
+    ]);
 
-      setOverview(overviewBody?.data || overviewBody || null);
-      setOrganizations(organizationData);
-      setIntegrations(integrationData);
-      setLogs(logData);
-      setAiConfigs(aiData);
-      setHealth(healthData);
-      setError(false);
-    } catch {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
+    setOverview({ ...DEFAULT_OVERVIEW, ...(overviewData || {}) });
+    setOrganizations(asArray(organizationData));
+    setIntegrations(asArray(integrationData));
+    setLogs(asArray(logData));
+    setAiConfigs(asArray(aiData));
+    setHealth(asArray(healthData));
+    setSectionErrors(errors);
+    setError(false);
+    setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -47,9 +84,18 @@ export function useAdmin() {
     for (const [key, value] of Object.entries(filters)) {
       if (value) params.set(key, value);
     }
-    const data = await apiList(`${BASE}/logs${params.toString() ? `?${params.toString()}` : ""}`);
-    setLogs(data);
-    return data;
+    const path = `${BASE}/logs${params.toString() ? `?${params.toString()}` : ""}`;
+    try {
+      const data = await apiList(path);
+      setLogs(asArray(data));
+      setSectionErrors((prev) => ({ ...prev, logs: false }));
+      return asArray(data);
+    } catch (error) {
+      console.error("[ADMIN API ERROR]", path, error);
+      setLogs([]);
+      setSectionErrors((prev) => ({ ...prev, logs: true }));
+      return [];
+    }
   }
 
   async function createOrganization(form) {
@@ -149,6 +195,7 @@ export function useAdmin() {
     logs,
     aiConfigs,
     health,
+    sectionErrors,
     loading,
     error,
     loadLogs,

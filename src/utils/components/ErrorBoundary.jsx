@@ -11,6 +11,7 @@ export default class ErrorBoundary extends Component {
 	}
 
 	componentDidCatch(error, info) {
+		console.error("[ADMIN ERROR]", error);
 		console.error("[ErrorBoundary]", error, info);
 	}
 

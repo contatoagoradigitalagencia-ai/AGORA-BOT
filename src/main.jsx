@@ -7,6 +7,7 @@ import { SocketProvider } from "./socket/SocketProvider.jsx";
 import { OverlayProvider } from "./overlay/OverlayProvider.jsx";
 
 import Cookies from "js-cookie";
+import ErrorBoundary from "./utils/components/ErrorBoundary.jsx";
 
 import "./style/index.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
@@ -75,7 +76,7 @@ createRoot(document.getElementById("root")).render(
 							<Route path="/privacy-policy" element={<ProtectedRoute><PrivacyPolicy /></ProtectedRoute>} />
 							<Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
 							<Route path="/attendants" element={<ProtectedRoute><Attendants /></ProtectedRoute>} />
-							<Route path="/admin" element={<ProtectedRoute roles={["owner", "admin"]}><Admin /></ProtectedRoute>} />
+							<Route path="/admin" element={<ProtectedRoute roles={["owner", "admin"]}><ErrorBoundary><Admin /></ErrorBoundary></ProtectedRoute>} />
 							<Route path="*" element={<NotFound />} />
 						</Routes>
 					</OverlayProvider>
