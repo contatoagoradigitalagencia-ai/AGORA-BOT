@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { apiPatch } from "../../api/client.js";
 
@@ -13,11 +13,21 @@ export default function GroupSettings({ bot, setBot }) {
   const accountId = account?.id || account?._id;
   const settings  = account?.settings || {};
 
-  const [enabled, setEnabled] = useState(settings.groupRepliesEnabled !== false);
-  const [mode,    setMode]    = useState(settings.groupReplyMode || "mention_only");
+  // Inicializa APENAS quando account chega — nunca antes
+  const [enabled, setEnabled] = useState(false);
+  const [mode,    setMode]    = useState("mention_only");
   const [saving,  setSaving]  = useState(false);
+  const [ready,   setReady]   = useState(false);
 
-  async function handleSave(newEnabled, newMode) {
+  // Sincroniza com os dados reais quando account carrega
+  useEffect(() => {
+    if (!accountId) return;
+    setEnabled(settings.groupRepliesEnabled === true); // só true se explicitamente true
+    setMode(settings.groupReplyMode || "mention_only");
+    setReady(true);
+  }, [accountId, settings.groupRepliesEnabled, settings.groupReplyMode]);
+
+  async function save(newEnabled, newMode) {
     if (!accountId || saving) return;
     setSaving(true);
     try {
@@ -33,9 +43,12 @@ export default function GroupSettings({ bot, setBot }) {
           settings: { ...prev.account?.settings, groupRepliesEnabled: newEnabled, groupReplyMode: newMode },
         },
       }));
-      toast.success("Configuração de grupos salva!");
+      toast.success("Salvo!");
     } catch {
-      toast.error("Erro ao salvar configuração de grupos.");
+      toast.error("Erro ao salvar.");
+      // Reverte estado visual
+      setEnabled(settings.groupRepliesEnabled === true);
+      setMode(settings.groupReplyMode || "mention_only");
     } finally {
       setSaving(false);
     }
@@ -44,14 +57,16 @@ export default function GroupSettings({ bot, setBot }) {
   async function toggleEnabled() {
     const next = !enabled;
     setEnabled(next);
-    await handleSave(next, mode);
+    await save(next, mode);
   }
 
   async function changeMode(e) {
     const next = e.target.value;
     setMode(next);
-    await handleSave(enabled, next);
+    await save(enabled, next);
   }
+
+  if (!ready) return null;
 
   return (
     <div className="flex flex-col gap-4 bg-zinc-900 border border-zinc-800 rounded-lg p-5">
@@ -60,7 +75,6 @@ export default function GroupSettings({ bot, setBot }) {
         <p className="text-sm text-zinc-400">Controla como o bot se comporta em grupos de WhatsApp.</p>
       </div>
 
-      {/* Toggle principal */}
       <label className={`flex items-center justify-between ${accountId ? "cursor-pointer" : "opacity-50 cursor-not-allowed"}`}>
         <span className="text-sm text-zinc-300">
           Responder em grupos
@@ -79,7 +93,6 @@ export default function GroupSettings({ bot, setBot }) {
         </div>
       </label>
 
-      {/* Modo — só visível se grupos habilitados */}
       {enabled && (
         <div className="flex flex-col gap-2">
           <label className="text-sm text-zinc-400">Quando responder em grupos</label>
@@ -96,11 +109,10 @@ export default function GroupSettings({ bot, setBot }) {
         </div>
       )}
 
-      {/* Alerta */}
       <div className="flex items-start gap-2 rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-3 py-2.5">
         <span className="text-yellow-400 mt-0.5 shrink-0">⚠️</span>
         <p className="text-xs text-yellow-300">
-          Recomendado: <strong>Apenas quando mencionado</strong> para evitar flood e banimento em grupos.
+          Recomendado: <strong>Apenas quando mencionado</strong> para evitar flood em grupos.
         </p>
       </div>
     </div>
