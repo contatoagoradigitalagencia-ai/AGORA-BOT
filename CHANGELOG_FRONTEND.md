@@ -1,5 +1,27 @@
 # Changelog — Frontend Agora Bot 2
 
+## 2026-06-04 — Bot por REST e Catalogo MongoDB
+
+### Módulo
+Bot + Catalogo
+
+### Problema
+As telas Bot e Planilhas dependiam de eventos Socket.IO legados. Quando esses eventos nao eram respondidos pelo AGORA-BOT-2, a tela ficava em loading infinito e o painel nao conseguia pausar a IA.
+
+### Solução
+- Tela Bot agora carrega por `GET /api/v1/bot-config`.
+- Botao de pausa/ativacao da IA chama `PATCH /api/v1/whatsapp-accounts/:id/settings` com `autoReply`.
+- Editor de prompt salva via `POST/PATCH /api/v1/prompts`.
+- Tela Planilhas foi substituida por Catalogo, consumindo `GET /api/v1/products`, `/services` e `/plans`.
+- Estados vazios adicionados para banco sem produtos, servicos ou planos.
+
+### Como testar
+```bash
+npm run build
+```
+
+---
+
 ## 2026-06-04
 
 ### Módulo

@@ -46,11 +46,11 @@ export default function Status({ support }) {
 			</div>
 			<div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 hover:border-orange-500/40 transition-all duration-300">
 				<div className="flex items-center justify-between">
-					<p className="text-zinc-400 text-sm">Base de conhecimento</p>
-					<i className="bi bi-file-earmark-spreadsheet text-orange-500 text-lg" />
+					<p className="text-zinc-400 text-sm">Catalogo</p>
+					<i className="bi bi-box-seam text-orange-500 text-lg" />
 				</div>
-				<h2 className="text-xl text-orange-500 mt-2">{support.countSpreadsheet} Planilhas</h2>
-				<p className="text-xs text-zinc-500 mt-2">Base de dados sincronizada</p>
+				<h2 className="text-xl text-orange-500 mt-2">{support.countSpreadsheet} itens</h2>
+				<p className="text-xs text-zinc-500 mt-2">Produtos, servicos e planos no MongoDB</p>
 			</div>
 			<div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 hover:border-orange-500/40 transition-all duration-300">
 				<div className="flex items-center justify-between">

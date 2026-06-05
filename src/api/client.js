@@ -65,6 +65,38 @@ export async function apiGet(path, config = {}) {
 	}
 }
 
+export async function apiPost(path, data = {}, config = {}) {
+	try {
+		const response = await axios.post(`${API_BASE_URL}${path}`, data, {
+			...config,
+			headers: {
+				...authHeaders(),
+				...(config.headers || {}),
+			},
+		});
+
+		return response.data;
+	} catch (error) {
+		throw normalizeError(error);
+	}
+}
+
+export async function apiPatch(path, data = {}, config = {}) {
+	try {
+		const response = await axios.patch(`${API_BASE_URL}${path}`, data, {
+			...config,
+			headers: {
+				...authHeaders(),
+				...(config.headers || {}),
+			},
+		});
+
+		return response.data;
+	} catch (error) {
+		throw normalizeError(error);
+	}
+}
+
 export async function apiList(path, config = {}) {
 	try {
 		const body = await apiGet(path, config);

@@ -1,46 +1,47 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
-import toast from "react-hot-toast";
+import { apiList } from "../../api/client.js";
+
+const EMPTY_CATALOG = {
+	products: [],
+	services: [],
+	plans: [],
+};
 
 /**
  * @author VAMPETA
- * @brief HOOK QUE BUSCA INFORMACOES DE CONFIGURACOES DA PLANILHA
- * @param {Object} socket SOCKET DE CONEXAO COM O BACK END
+ * @brief HOOK QUE BUSCA O CATALOGO INTERNO NO AGORA BOT 2
 */
-export function useGetSpreadsheet(socket) {
-	const [infoSpreadsheets, setInfoSpreadsheets] = useState(null);
+export function useCatalog() {
+	const [catalog, setCatalog] = useState(EMPTY_CATALOG);
 	const [error, setError] = useState(false);
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		socket.emit("spreadsheets:get_spreadsheets", {}, (res) => {
-			if (!res || res.error) return (setError(true));
-			setInfoSpreadsheets(res);
-			setLoading(false);
-		});
-	}, [socket]);
-	return ({ infoSpreadsheets, setInfoSpreadsheets, loading, error });
-}
+		let active = true;
 
-/**
- * @author VAMPETA
- * @brief FUNCAO QUE ATUALIZA QUAIS PLANILHAS ESTAO SENDO USADAS
- * @param {Object} socket SOCKET DE CONEXAO COM O BACK END
- * @param {Object} infoSpreadsheets VARIAVEL QUE CONTEM AS PLANILHAS DISPONIVEIS E QUAIS ESTAO EM USO
- * @param {Object} setInfoSpreadsheets FUNCAO DE CONTROLE DA VARIAVEL spreadsheets
- * @param {Number} index POSICAO DO COMPONENTE QUE SERA ATUALIZADO
-*/
-export function selectSpreadsheet(socket, infoSpreadsheets, setInfoSpreadsheets, index) {
-	const spreadsheet = infoSpreadsheets.pages[index];
-
-	socket.emit("spreadsheets:update_used_spreadsheets", { [!spreadsheet.active ? "add" : "remove"]: spreadsheet.page }, (res) => {
-		if (res !== 204) return (toast.error("Erro ao salvar!"));
-		setInfoSpreadsheets((prev) => {
-			return ({
-				...prev,
-				pages: prev.pages.map((item, i) => ((i === index) ? { ...item, active: !spreadsheet.active } : item))
+		Promise.all([
+			apiList("/products"),
+			apiList("/services"),
+			apiList("/plans"),
+		])
+			.then(([products, services, plans]) => {
+				if (!active) return ;
+				setCatalog({ products, services, plans });
+			})
+			.catch(() => {
+				if (!active) return ;
+				setError(true);
+			})
+			.finally(() => {
+				if (!active) return ;
+				setLoading(false);
 			});
+
+		return (() => {
+			active = false;
 		});
-		toast.success("Salvo com sucesso!");
-	});
+	}, []);
+
+	return ({ catalog, loading, error });
 }
