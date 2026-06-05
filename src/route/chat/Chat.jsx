@@ -1,4 +1,5 @@
 import { useSocket } from "../../socket/useSocket.js";
+import ErrorBoundary from "../../utils/components/ErrorBoundary.jsx";
 
 import Load from "../../screens/Load.jsx";
 import Error from "../../screens/Error.jsx";
@@ -10,7 +11,7 @@ import Footer from "./footer/Footer.jsx"
  * @author VAMPETA
  * @brief COMPONENTE PRINCIPAL DO CHAT
 */
-export default function Chat() {
+function ChatInner() {
 	const { socket, connected, error } = useSocket();
 
 	if (!socket) return (<Load />);
@@ -23,4 +24,8 @@ export default function Chat() {
 			<Footer socket={socket} />
 		</div>
 	);
+}
+
+export default function Chat() {
+	return <ErrorBoundary><ChatInner /></ErrorBoundary>;
 }

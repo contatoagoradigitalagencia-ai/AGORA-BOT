@@ -71,7 +71,7 @@ function toggleSpeed(audioRef, playbackRate, setPlaybackRate) {
 */
 const Audio = memo(function Audio({ message }) {
 	const { audioRef, playing, setPlaying, progress, duration, currentTime, playbackRate, setPlaybackRate } = usePlayerAudio();
-	const src = (message.direction === "outbound") ? message.data.audio.link : message.data.audio.url;
+	const src = message?.data?.audio?.link || message?.data?.audio?.url || null;
 
 	return (
 		<>
