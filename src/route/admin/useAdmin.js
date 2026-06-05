@@ -9,23 +9,29 @@ export function useAdmin() {
   const [organizations, setOrganizations] = useState([]);
   const [integrations, setIntegrations] = useState([]);
   const [logs,         setLogs]         = useState([]);
+  const [aiConfigs,    setAiConfigs]    = useState([]);
+  const [health,       setHealth]       = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [overviewBody, organizationData, integrationData, logData] = await Promise.all([
+      const [overviewBody, organizationData, integrationData, logData, aiData, healthData] = await Promise.all([
         apiGet(`${BASE}/overview`),
         apiList(`${BASE}/organizations`),
         apiList(INTEGRATIONS),
         apiList(`${BASE}/logs`),
+        apiList(`${BASE}/ai`),
+        apiList(`${BASE}/health`),
       ]);
 
       setOverview(overviewBody?.data || overviewBody || null);
       setOrganizations(organizationData);
       setIntegrations(integrationData);
       setLogs(logData);
+      setAiConfigs(aiData);
+      setHealth(healthData);
       setError(false);
     } catch {
       setError(true);
@@ -35,6 +41,16 @@ export function useAdmin() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  async function loadLogs(filters = {}) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) params.set(key, value);
+    }
+    const data = await apiList(`${BASE}/logs${params.toString() ? `?${params.toString()}` : ""}`);
+    setLogs(data);
+    return data;
+  }
 
   async function createOrganization(form) {
     const res = await apiPost(`${BASE}/organizations`, form);
@@ -100,13 +116,42 @@ export function useAdmin() {
     return item;
   }
 
+  async function syncIntegration(id) {
+    const res = await apiPost(`${INTEGRATIONS}/${id}/sync`, {});
+    await load();
+    return res?.data || res;
+  }
+
+  async function restartWebhook(id) {
+    const res = await apiPost(`${INTEGRATIONS}/${id}/restart-webhook`, {});
+    await load();
+    return res?.data || res;
+  }
+
+  async function updateAi(id, form) {
+    const res = await apiPatch(`${BASE}/ai/${id}`, form);
+    await load();
+    return res?.data || res;
+  }
+
+  async function restartAi(organizationId) {
+    return apiPost(`${BASE}/ai/restart`, { organizationId });
+  }
+
+  async function testPrompt(payload) {
+    return apiPost(`${BASE}/ai/test-prompt`, payload);
+  }
+
   return {
     overview,
     organizations,
     integrations,
     logs,
+    aiConfigs,
+    health,
     loading,
     error,
+    loadLogs,
     createOrganization,
     updateOrganization,
     deactivateOrganization,
@@ -115,6 +160,11 @@ export function useAdmin() {
     remove,
     testConnection,
     activateIntegration,
+    syncIntegration,
+    restartWebhook,
+    updateAi,
+    restartAi,
+    testPrompt,
     refetch: load,
   };
 }
