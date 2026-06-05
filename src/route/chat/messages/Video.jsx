@@ -1,15 +1,19 @@
 import { memo, useMemo, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import { formattedText } from "../../../utils/components/formattedString.jsx";
+import { mediaCaption, mediaSource, warnMissingMediaUrl } from "./mediaSource.js";
 
 const Video = memo(function Video({ message }) {
 	const [videoError, setVideoError] = useState(false);
 	const { ref, inView } = useInView({ triggerOnce: true });
 
-	const src = message?.data?.video?.link || message?.data?.video?.url || null;
+	const src = mediaSource(message, "video");
+	const captionText = mediaCaption(message, "video");
 	const text = useMemo(() =>
-		message?.data?.video?.caption ? formattedText(message.data.video.caption) : null,
-	[message?.data?.video?.caption]);
+		captionText ? formattedText(captionText) : null,
+	[captionText]);
+
+	if (!src) warnMissingMediaUrl(message, "video");
 
 	return (
 		<div ref={ref} className="flex flex-col gap-2">

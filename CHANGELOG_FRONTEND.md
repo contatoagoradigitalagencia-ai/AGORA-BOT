@@ -1,5 +1,26 @@
 # Changelog — Frontend Agora Bot 2
 
+## 2026-06-05 — Renderizacao segura de imagem e video
+
+### Módulo
+Chat / mensagens de midia
+
+### Problema
+Imagem e video podiam chegar com URL em `message.media.url`, `message.data.image.url`, `message.data.video.url`, `link` ou campos legados. Os componentes liam poucos caminhos e exibiam "indisponivel" mesmo quando a URL existia.
+
+### Solução
+- Novo helper `mediaSource()` centraliza a ordem segura de leitura de URLs.
+- `Image.jsx` tenta `message.media.url`, `data.image.url`, `data.url`, `data.image.link`, `data.link` e fallbacks equivalentes.
+- `Video.jsx` usa a mesma regra para `video`.
+- Em desenvolvimento, mensagens sem URL registram `[MEDIA UI MISSING URL]` sem quebrar a tela.
+
+### Como testar
+```bash
+npm run build
+```
+
+---
+
 ## 2026-06-04 — Bot por REST e Catalogo MongoDB
 
 ### Módulo
