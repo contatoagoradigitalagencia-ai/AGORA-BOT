@@ -99,6 +99,7 @@ function MessageBubble({ message }) {
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function Messages({ socket }) {
 	const { phone } = useParams();
+	const isGroup = phone?.includes('-group') || phone?.includes('@g.us');
 	const { messages, setMessages, error, loadMore, hasMore, loadingMore } = useLoadMessages(socket, phone);
 	const { containerRef, bottomRef, handleScroll } = useScroll({ messages, hasMore, loadingMore, loadMore });
 	useChatRealtime(socket, phone, setMessages);
@@ -109,9 +110,9 @@ export default function Messages({ socket }) {
 	if (messages.length === 0) {
 		return (
 			<div className="flex-1 flex flex-col items-center justify-center gap-2 text-zinc-500">
-				<i className="bi bi-chat-right-text text-4xl" />
-				<p className="text-sm">Nenhuma mensagem ainda</p>
-				<p className="text-xs text-zinc-600">As mensagens aparecerão aqui quando o contato enviar uma.</p>
+				<i className={`bi ${isGroup ? 'bi-people' : 'bi-chat-right-text'} text-4xl`} />
+				<p className="text-sm">{isGroup ? 'Grupo — nenhuma mensagem salva ainda' : 'Nenhuma mensagem ainda'}</p>
+				<p className="text-xs text-zinc-600">{isGroup ? 'Mensagens de grupo aparecem apenas quando alguém enviar.' : 'As mensagens aparecerão aqui quando o contato enviar uma.'}</p>
 			</div>
 		);
 	}
