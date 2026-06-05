@@ -43,6 +43,10 @@ function SidebarContent({ close }) {
 						<i className="bi bi-robot text-xl" />
 						<span>Bot</span>
 					</Link>
+					<Link className={`flex items-center gap-1 px-4 py-2 rounded-lg ${(location.pathname === "/team") ? "bg-orange-500 text-black" : "hover:bg-zinc-800"}`} to="/team" onClick={close}>
+						<i className="bi bi-people text-xl" />
+						<span>Equipe</span>
+					</Link>
 					<Link className={`flex items-center gap-1 px-4 py-2 rounded-lg ${(location.pathname === "/spreadsheets") ? "bg-orange-500 text-black" : "hover:bg-zinc-800"}`} to="/spreadsheets" onClick={close}>
 						<i className="bi bi-box-seam text-xl" />
 						<span>Catalogo</span>

@@ -85,9 +85,11 @@ export default function Body() {
 	if (chats === null) return <Load />;
 
 	async function handleAssume(chat) {
+		// Pega nome do usuário logado do cookie/localStorage
+		const userName = document.cookie.match(/phone=([^;]+)/)?.[1] || "Atendente";
 		await apiPost(`/conversations/${chat.conversationId}/assign`, {
 			userId:   "me",
-			userName: "Atendente",
+			userName: decodeURIComponent(userName),
 		});
 		await refetch();
 	}

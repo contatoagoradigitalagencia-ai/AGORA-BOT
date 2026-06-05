@@ -27,6 +27,7 @@ import Guide from "./route/guide/Guide.jsx";
 import TermsOfUSe from "./route/terms of use/TermsOfUse.jsx";
 import PrivacyPolicy from "./route/privacy policy/PrivacyPolicy.jsx";
 import Support from "./route/support/Support.jsx";
+import Team from "./route/team/Team.jsx";
 import NotFound from "./route/NotFound/NotFound.jsx";
 
 /**
@@ -70,6 +71,7 @@ createRoot(document.getElementById("root")).render(
 							<Route path="/terms-of-use" element={<ProtectedRoute><TermsOfUSe /></ProtectedRoute>} />
 							<Route path="/privacy-policy" element={<ProtectedRoute><PrivacyPolicy /></ProtectedRoute>} />
 							<Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
+							<Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
 							<Route path="*" element={<NotFound />} />
 						</Routes>
 					</OverlayProvider>
