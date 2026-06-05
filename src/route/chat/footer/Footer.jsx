@@ -19,12 +19,12 @@ function OutsideResponseWindow() {
  * @brief FOOTER DO CHAT
  * @param {Object} socket SOCKET DE CONEXAO COM O BACK END
 */
-export default function Footer({ socket }) {
+export default function Footer({ socket, replyTo, setReplyTo }) {
 	const { replyWindow } = useReplyWindow(socket);
 
 	return (
 		<>
-			{(replyWindow) ? <ChatComposer socket={socket} /> : <OutsideResponseWindow />}
+			{(replyWindow) ? <ChatComposer socket={socket} replyTo={replyTo} setReplyTo={setReplyTo} /> : <OutsideResponseWindow />}
 		</>
 	);
 }

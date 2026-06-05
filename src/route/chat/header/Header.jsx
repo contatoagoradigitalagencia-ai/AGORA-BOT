@@ -14,6 +14,19 @@ import HumanService from "./HumanService.jsx";
  * @param {Object} socket SOCKET DE CONEXAO COM O BACK END
  * @param {String} phone NUMERO DE TELEFONE DO CONTATO
  */
+function ContactTitle({ socket, phone }) {
+	const { contact } = useGetContact(socket, phone);
+	const isGroup = phone?.includes("-group") || phone?.includes("@g.us");
+	const name = contact?.name;
+	const display = name || (isGroup ? "Grupo" : phone?.replace(/^55(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3") || phone);
+	return (
+		<div className="flex flex-col items-center min-w-0">
+			<p className="text-base font-semibold text-orange-400 truncate">{display}</p>
+			{name && !isGroup && <p className="text-xs text-zinc-500">{phone?.replace(/^55(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3")}</p>}
+		</div>
+	);
+}
+
 function Drawer({ socket, phone }) {
 	const { contact, setContact, loading } = useGetContact(socket, phone);
 
@@ -48,7 +61,7 @@ export default function Header({ socket }) {
 	return (
 		<header className="flex justify-around items-center px-4 md:px-10 py-4 border-b border-zinc-800">
 			<i className="bi bi-arrow-left cursor-pointer text-4xl text-orange-500" onClick={() => navigate("/chat")} />
-			<h1 className="text-lg md:text-xl font-semibold text-orange-500">{phone.replace(/^55(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3')}</h1>
+			<ContactTitle socket={socket} phone={phone} />
 			<i className="bi bi-three-dots-vertical cursor-pointer text-4xl text-orange-500" onClick={() => openDrawer(<Drawer socket={socket} phone={phone} />)} />
 		</header>
 	);

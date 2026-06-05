@@ -26,16 +26,16 @@ function handleInput(setMessage, value, textareaRef) {
  * @param {Object} setMessage MODIFICADOR DA VARIAVEL message
  * @param {Object} textareaRef REFERENCIA DA TAG textarea
 */
-function sendText(socket, phone, message, setMessage, textareaRef) {
+function sendText(socket, phone, message, setMessage, textareaRef, replyTo, setReplyTo) {
 	if (!message.trim()) return ;
 	const data = {
 		type: "text",
-		text: {
-			body: message
-		}
+		text: { body: message },
+		replyToMessageId: replyTo?._id || replyTo?.id || null,
 	};
 	socket.emit("chat:send_message", { phone: phone, message: data }, (res) => {
-		if (res !== 204 || res.error) return (toast.error("Mesagem não enviada"));
+		if (res !== 204 && res?.error) return (toast.error("Mensagem não enviada"));
+		if (setReplyTo) setReplyTo(null);
 	});
 	setMessage("");
 	textareaRef.current.style.height = "auto";
@@ -50,10 +50,10 @@ function sendText(socket, phone, message, setMessage, textareaRef) {
  * @param {String} value VALOR ANTES DE INCREMENTAR O TEXTAREA
  * @param {Object} textareaRef REFERENCIA DO TEXTEAREA
 */
-function handleKeyDown(phone, element, socket, message, setMessage, textareaRef) {
+function handleKeyDown(phone, element, socket, message, setMessage, textareaRef, replyTo, setReplyTo) {
 	if (element.key === "Enter" && !element.shiftKey) {
 		element.preventDefault();
-		sendText(socket, phone, message, setMessage, textareaRef);
+		sendText(socket, phone, message, setMessage, textareaRef, replyTo, setReplyTo);
 	}
 }
 
@@ -62,7 +62,7 @@ function handleKeyDown(phone, element, socket, message, setMessage, textareaRef)
  * @brief COMPONENTE RESPONSAVEL POR GERAR O CAMPO DE DIGITACAO DA MENSAGEM E BOTAO DE ENVIAR
  * @param {Object} socket SOCKET DE CONEXAO COM O BACK END
 */
-export default function ChatComposer({ socket }) {
+export default function ChatComposer({ socket, replyTo, setReplyTo }) {
 	const { phone } = useParams();
 	const [message, setMessage] = useState("");
 	const textareaRef = useRef(null);
@@ -75,9 +75,9 @@ export default function ChatComposer({ socket }) {
 					<i className="bi bi-three-dots" />
 				</button>
 				<div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 flex items-end">
-					<textarea ref={textareaRef} rows={1} value={message} onChange={(element) => handleInput(setMessage, element.target.value, textareaRef)} onKeyDown={(element) => handleKeyDown(phone, element, socket, message, setMessage, textareaRef)} placeholder="Digite uma mensagem" className="w-full bg-transparent resize-none outline-none text-white placeholder-gray-400 max-h-40 overflow-y-auto" />
+					<textarea ref={textareaRef} rows={1} value={message} onChange={(element) => handleInput(setMessage, element.target.value, textareaRef)} onKeyDown={(element) => handleKeyDown(phone, element, socket, message, setMessage, textareaRef, replyTo, setReplyTo)} placeholder="Digite uma mensagem" className="w-full bg-transparent resize-none outline-none text-white placeholder-gray-400 max-h-40 overflow-y-auto" />
 				</div>
-				<button onClick={() => sendText(socket, phone, message, setMessage, textareaRef)} className={`flex items-center justify-center h-10 w-10 bg-orange-500 transition-colors text-white rounded-full ${(message) ? "cursor-pointer hover:bg-orange-400" : ""}`}>
+				<button onClick={() => sendText(socket, phone, message, setMessage, textareaRef, replyTo, setReplyTo)} className={`flex items-center justify-center h-10 w-10 bg-orange-500 transition-colors text-white rounded-full ${(message) ? "cursor-pointer hover:bg-orange-400" : ""}`}>
 					<i className="bi bi-send-fill text-lg" />
 				</button>
 			</div>

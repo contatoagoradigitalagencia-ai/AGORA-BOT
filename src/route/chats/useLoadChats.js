@@ -22,10 +22,17 @@ function normalizeChats(conversations, contacts, messages) {
 		const contact = contactsById.get(String(conversation.contactId)) || {};
 		const lastMessage = lastMessageByConversation.get(String(conversation._id));
 
+		const isGroup = (contact.phone || '').includes('-group') || (contact.phone || '').includes('@g.us');
+		const displayName = contact.name && contact.name !== 'Sem nome'
+			? contact.name
+			: isGroup
+				? (conversation.chatName || 'Grupo')
+				: null;
 		return {
 			id: conversation._id,
 			phone: contact.phone || String(conversation._id),
-			contactName: contact.name || "Sem nome",
+			isGroup,
+			contactName: displayName,
 			lastMessage: {
 				humanViewed: true,
 				type: lastMessage?.type || "text",

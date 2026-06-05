@@ -59,21 +59,36 @@ export default function Body({ socket }) {
 	}
 	return (
 		<div className="flex-1 overflow-y-auto px-1 animate-toastIn" ref={containerRef} onScroll={handleScroll}>
-			{chats.map((chat) => (
-				<Link className={`flex flex-col justify-center w-full h-20 my-3 px-6 ${(!chat.lastMessage.humanViewed) ? "bg-zinc-600" : "bg-zinc-900"} rounded border border-zinc-800 text-white hover:bg-orange-500 transition`} key={chat.phone} to={`/chat/${chat.phone}`}>
-					<div className="flex justify-between">
-						<p>{(chat.contactName && chat.contactName !== "Sem nome") ? chat.contactName : chat.phone.replace(/^55(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3")}</p>
-						{!chat.lastMessage.humanViewed && <i className="bi bi-chat-left-dots" />}
+			{chats.map((chat) => {
+				const phone = chat.phone || '';
+				const isGroup = chat.isGroup || phone.includes('-group');
+				const displayName = chat.contactName
+					|| (isGroup ? 'Grupo' : phone.replace(/^55(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3'));
+				const displayPhone = !isGroup && chat.contactName
+					? phone.replace(/^55(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3')
+					: null;
+				return (
+				<Link className={`flex items-center gap-3 w-full py-3 px-4 my-1 ${(!chat.lastMessage.humanViewed) ? "bg-zinc-800" : "bg-zinc-900"} rounded-xl border border-zinc-800 text-white hover:border-orange-500 transition`} key={chat.phone} to={`/chat/${chat.phone}`}>
+					{/* Avatar */}
+					<div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center shrink-0">
+						<i className={`bi ${isGroup ? 'bi-people-fill' : 'bi-person-fill'} text-zinc-400`} />
 					</div>
-					<div className="flex justify-between items-center">
-						<p className="truncate flex-1">
+					{/* Info */}
+					<div className="flex-1 min-w-0">
+						<div className="flex justify-between items-center">
+							<p className="font-medium truncate">{displayName}</p>
+							<span className="ml-2 shrink-0 text-xs text-zinc-500">{formatDate(chat.lastMessage.timestamp)}</span>
+						</div>
+						{displayPhone && <p className="text-xs text-zinc-500">{displayPhone}</p>}
+						<p className="truncate text-xs text-zinc-400">
 							<TypeMessage type={chat.lastMessage.type} />
 							{chat.lastMessage.text}
 						</p>
-						<span className="ml-2 shrink-0 text-xs text-gray-400">{formatDate(chat.lastMessage.timestamp)}</span>
 					</div>
+					{!chat.lastMessage.humanViewed && <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0" />}
 				</Link>
-			))}
+				);
+			})}
 			{loadingMore && (
 				<div className="flex items-center justify-center my-4">
 					<div className="h-8 w-8 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
