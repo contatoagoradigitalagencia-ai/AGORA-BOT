@@ -9,5 +9,7 @@ export function logout(navigate) {
 	Cookies.remove("phone", { path: "/" });
 	Cookies.remove("idPhone", { path: "/" });
 	Cookies.remove("token", { path: "/" });
+	Cookies.remove("role", { path: "/" });
+	Cookies.remove("name", { path: "/" });
 	navigate("/");
 }

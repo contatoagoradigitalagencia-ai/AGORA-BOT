@@ -25,6 +25,7 @@ const ZAPI_FIELDS = [
 
 function defaultForm(item) {
   return {
+    organizationId: item?.organizationId || item?.organization?.id || item?.organization?._id || "",
     clientName:  item?.clientName  || "",
     companyName: item?.companyName || "",
     provider:    item?.provider    || "zapi",
@@ -43,7 +44,7 @@ function defaultForm(item) {
   };
 }
 
-export default function AdminDrawer({ open, onClose, item, onCreate, onUpdate }) {
+export default function AdminDrawer({ open, onClose, item, organizations = [], onCreate, onUpdate }) {
   const isEdit = Boolean(item?._id || item?.id);
   const [form,   setForm]   = useState(() => defaultForm(item));
   const [saving, setSaving] = useState(false);
@@ -58,10 +59,13 @@ export default function AdminDrawer({ open, onClose, item, onCreate, onUpdate })
 
   async function handleSave() {
     if (!form.clientName.trim()) { toast.error("Nome do cliente obrigatório."); return; }
+    if (organizations.length === 0) { toast.error("Cadastre uma organização antes da integração."); return; }
+    if (!form.organizationId) { toast.error("Selecione a organização."); return; }
     setSaving(true);
     try {
       // Remove campos de secret vazios para não sobrescrever no edit
       const payload = { ...form };
+      if (!payload.organizationId && organizations[0]) payload.organizationId = organizations[0]._id || organizations[0].id;
       if (isEdit) {
         for (const f of [...META_FIELDS, ...ZAPI_FIELDS]) {
           if (f.secret && !payload[f.key]) delete payload[f.key];
@@ -96,6 +100,19 @@ export default function AdminDrawer({ open, onClose, item, onCreate, onUpdate })
 
           {/* Dados básicos */}
           <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-zinc-400">Organização *</label>
+              <select
+                className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-orange-500 transition"
+                value={form.organizationId || ""}
+                onChange={e => set("organizationId", e.target.value)}
+              >
+                <option value="">Selecione...</option>
+                {organizations.map((org) => (
+                  <option key={org._id || org.id} value={org._id || org.id}>{org.name}</option>
+                ))}
+              </select>
+            </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-zinc-400">Nome do cliente *</label>
               <input

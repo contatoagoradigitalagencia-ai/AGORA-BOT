@@ -6,6 +6,16 @@ import axios from "axios";
 
 import server from "../../server.js";
 
+function readJwtPayload(token) {
+	try {
+		const payload = token.split(".")[1];
+		if (!payload) return {};
+		return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+	} catch {
+		return {};
+	}
+}
+
 /**
  * @author VAMPETA
  * @brief FUNCAO RESPONSAVEL POR LOGAR
@@ -33,8 +43,11 @@ async function login(phone, password, setError, navigate) {
 		Cookies.set("phone", phone, { expires: 7, path: "/", sameSite: "Strict" });
 		Cookies.set("idPhone", idPhone, { expires: 7, path: "/", sameSite: "Strict" });
 		Cookies.set("token", token, { expires: 7, path: "/", sameSite: "Strict" });
+		const user = readJwtPayload(token);
+		if (user.role) Cookies.set("role", user.role, { expires: 7, path: "/", sameSite: "Strict" });
+		if (user.name) Cookies.set("name", user.name, { expires: 7, path: "/", sameSite: "Strict" });
 		navigate(`/dashboard`);
-	} catch (error) {
+	} catch {
 		setError("Usuário ou senha incorretos");
 	}
 }

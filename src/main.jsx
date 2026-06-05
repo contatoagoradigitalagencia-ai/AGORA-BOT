@@ -36,12 +36,14 @@ import NotFound from "./route/NotFound/NotFound.jsx";
  * @brief FUNCAO QUE VERIFICA SE O USUARIO TEM COOKIES PARA LOGIN
  * @param children ELEMENTO FILHO
 */
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, roles }) {
 	const phone = Cookies.get("phone");
 	const idPhone = Cookies.get("idPhone");
 	const token = Cookies.get("token");
+	const role = Cookies.get("role");
 
 	if (!phone || !idPhone || !token) return (<Navigate to="/" replace />);
+	if (roles?.length && !roles.includes(role)) return (<Navigate to="/dashboard" replace />);
 	return (children);
 }
 
@@ -73,7 +75,7 @@ createRoot(document.getElementById("root")).render(
 							<Route path="/privacy-policy" element={<ProtectedRoute><PrivacyPolicy /></ProtectedRoute>} />
 							<Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
 							<Route path="/attendants" element={<ProtectedRoute><Attendants /></ProtectedRoute>} />
-							<Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+							<Route path="/admin" element={<ProtectedRoute roles={["owner", "admin"]}><Admin /></ProtectedRoute>} />
 							<Route path="*" element={<NotFound />} />
 						</Routes>
 					</OverlayProvider>
