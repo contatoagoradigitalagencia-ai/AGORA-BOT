@@ -1,49 +1,51 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { apiList } from "../../api/client.js";
 
-function normalizeQueue(queue, contacts) {
-	const contactsById = new Map(contacts.map((contact) => [String(contact._id), contact]));
+function normalizeQueue(queue, contacts, conversations) {
+	const contactsById = new Map(contacts.map(c => [String(c._id), c]));
+	const convsById    = new Map(conversations.map(c => [String(c._id), c]));
 
-	return queue.map((item) => {
+	return queue.map(item => {
 		const contact = contactsById.get(String(item.contactId)) || {};
+		const conv    = convsById.get(String(item.conversationId)) || {};
 
 		return {
-			id: item._id,
-			phone: contact.phone || String(item.contactId || item._id),
-			name: contact.name || "Sem nome",
-			timestamp: item.createdAt || item.updatedAt,
+			id:             String(item._id),
+			conversationId: String(item.conversationId),
+			phone:          contact.phone || String(item.contactId),
+			name:           contact.name  || "Sem nome",
+			assignedToName: conv.assignedToName || conv.metadata?.assignedToName || "",
+			lastMessage:    conv.lastMessagePreview || "",
+			timestamp:      item.createdAt || item.updatedAt,
+			status:         item.status,
 		};
 	});
 }
 
-/**
- * @author VAMPETA
- * @brief HOOK QUE CONTROLA O LOAD DAS CONVERSAS
- * @param {Object} socket SOCKET DE CONEXAO COM O BACK END
- */
 export function useLoadMessagesWaiting() {
 	const [chats, setChats] = useState(null);
 	const [error, setError] = useState(false);
 
-	useEffect(() => {
-		let active = true;
-
-		Promise.all([
-			apiList("/human-queue"),
-			apiList("/contacts"),
-		]).then(([queue, contacts]) => {
-			if (!active) return ;
-			setChats(normalizeQueue(queue, contacts));
-		}).catch(() => {
-			if (!active) return ;
+	const load = useCallback(async () => {
+		try {
+			const [queue, contacts, conversations] = await Promise.all([
+				apiList("/human-queue"),
+				apiList("/contacts"),
+				apiList("/conversations"),
+			]);
+			setChats(normalizeQueue(
+				queue.filter(q => q.status !== "resolved"),
+				contacts,
+				conversations,
+			));
+			setError(false);
+		} catch {
 			setError(true);
 			setChats([]);
-		});
-
-		return (() => {
-			active = false;
-		});
+		}
 	}, []);
 
-	return ({ chats, setChats, error });
+	useEffect(() => { load(); }, [load]);
+
+	return { chats, setChats, error, refetch: load };
 }

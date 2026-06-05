@@ -1,61 +1,121 @@
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-
 import { useLoadMessagesWaiting } from "./useLoadMessagesWaiting.js";
-
 import Load from "../../screens/Load.jsx";
 import Error from "../../screens/Error.jsx";
-
 import { formatDate } from "../../utils/functions/formatDate.js";
+import { apiPost } from "../../api/client.js";
 
-/**
- * @author VAMPETA
- * @brief FUNCAO QUE CONSULTA OU MODIFICA SE O BOT ESTA ATIVO
- * @param {Object} socket SOCKET DE CONEXAO COM O BACK END
- * @param {String} phone NUMERO DO CONTATO QUE FOI ATENDIDO
- * @param {Funciton} setChats FUNCAO MODIFICADORA DA LISTA DE CONTATOS
-*/
-function removeWaitingService(socket, phone, setChats) {
-	if (!socket) return ;
-	socket.emit("human-service:remove_waiting_service", { phone: phone }, (res) => {
-		if (res !== 204) return (toast.error("Erro ao remover contato da lista de espera para atendimento!"));
-		setChats((prev) => prev.filter((chat) => (chat.phone !== phone)));
-		toast.success("Contato removido da lista de espera de atendimento!");
-	});
+function QueueCard({ chat, onAssume, onClose }) {
+	const [assuming, setAssuming] = useState(false);
+	const [closing,  setClosing]  = useState(false);
+
+	async function handleAssume() {
+		setAssuming(true);
+		try { await onAssume(chat); toast.success("Conversa assumida!"); }
+		catch { toast.error("Erro ao assumir conversa."); }
+		finally { setAssuming(false); }
+	}
+
+	async function handleClose(resumeBot) {
+		setClosing(true);
+		try { await onClose(chat, resumeBot); toast.success("Atendimento encerrado!"); }
+		catch { toast.error("Erro ao encerrar."); }
+		finally { setClosing(false); }
+	}
+
+	const name = chat.name && chat.name !== "Sem nome"
+		? chat.name
+		: chat.phone.replace(/^55(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+
+	return (
+		<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+			<div className="flex flex-col gap-1 flex-1 min-w-0">
+				<div className="flex items-center gap-2">
+					<span className="font-medium text-zinc-100 truncate">{name}</span>
+					{chat.assignedToName && (
+						<span className="text-xs bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded-full shrink-0">
+							{chat.assignedToName}
+						</span>
+					)}
+					{!chat.assignedToName && (
+						<span className="text-xs bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded-full shrink-0">
+							Sem responsável
+						</span>
+					)}
+				</div>
+				{chat.lastMessage && (
+					<p className="text-xs text-zinc-500 truncate">{chat.lastMessage}</p>
+				)}
+				<span className="text-xs text-zinc-600">{formatDate(chat.timestamp)}</span>
+			</div>
+			<div className="flex gap-2 shrink-0">
+				<Link
+					to={`/chat/${chat.phone}`}
+					className="px-3 py-1.5 text-xs rounded-lg border border-zinc-700 text-zinc-300 hover:bg-zinc-800 transition"
+				>
+					Ver chat
+				</Link>
+				<button
+					className="px-3 py-1.5 text-xs rounded-lg bg-orange-500 text-black font-medium hover:bg-orange-400 transition disabled:opacity-50"
+					onClick={handleAssume}
+					disabled={assuming || closing}
+				>
+					{assuming ? "..." : "Assumir"}
+				</button>
+				<button
+					className="px-3 py-1.5 text-xs rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition disabled:opacity-50"
+					onClick={() => handleClose(true)}
+					disabled={closing || assuming}
+				>
+					{closing ? "..." : "Encerrar"}
+				</button>
+			</div>
+		</div>
+	);
 }
 
-/**
- * @author VAMPETA
- * @brief PAGINA DE MENSAGENS RAPIDAS
- * @param {Object} socket SOCKET DE CONEXAO COM O BACK END
-*/
-export default function Body({ socket }) {
-	const { chats, setChats, error } = useLoadMessagesWaiting();
+// precisa de useState no escopo do componente
+import { useState } from "react";
 
-	if (error) return (<Error />);
-	if (chats === null) return (<Load />);
+export default function Body() {
+	const { chats, setChats, error, refetch } = useLoadMessagesWaiting();
+
+	if (error)         return <Error />;
+	if (chats === null) return <Load />;
+
+	async function handleAssume(chat) {
+		await apiPost(`/conversations/${chat.conversationId}/assign`, {
+			userId:   "me",
+			userName: "Atendente",
+		});
+		await refetch();
+	}
+
+	async function handleClose(chat, resumeBot) {
+		await apiPost(`/conversations/${chat.conversationId}/close-human`, { resumeBot });
+		setChats(prev => prev.filter(c => c.conversationId !== chat.conversationId));
+	}
+
 	if (chats.length === 0) {
 		return (
-			<div className="flex flex-col items-center justify-center flex-1 overflow-y-auto">
-				<i className="bi bi-chat-right-text text-white text-5xl" />
-				<p className="text-white">Nenhum atendimento em aberto</p>
+			<div className="flex flex-col items-center justify-center flex-1 gap-3 text-zinc-500">
+				<i className="bi bi-check-circle text-4xl text-green-500" />
+				<p className="text-sm">Nenhum atendimento em aberto</p>
 			</div>
 		);
 	}
+
 	return (
-		<div className="flex-1 overflow-y-auto px-1 animate-toastIn">
-			{chats.map((chat) => (
-				<div className="flex justify-between items-center w-full h-20 my-3 bg-zinc-900 rounded border border-zinc-800 text-white transition" key={chat.phone}>
-					<Link className="flex flex-col justify-center w-[60%] md:w-[80%] h-full px-6 gap-2 hover:bg-orange-500" to={`/chat/${chat.phone}`}>
-						<p>{chat.name && chat.name !== "Sem nome" ? chat.name : chat.phone.replace(/^55(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3")}</p>
-						<span className="text-xs text-gray-400">{formatDate(chat.timestamp)}</span>
-					</Link>
-					<div className="flex flex-col justify-center items-center w-[40%] md:w-[20%] h-full px-6">
-						<button className="w-full md:w-auto text-center px-0 md:px-6 py-2 bg-orange-500 text-black rounded-lg font-medium hover:bg-orange-400 transition cursor-pointer" onClick={() => removeWaitingService(socket, chat.phone, setChats)}>
-							Encerrar
-						</button>
-					</div>
-				</div>
+		<div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-3 animate-toastIn">
+			<p className="text-xs text-zinc-500">{chats.length} {chats.length === 1 ? "conversa" : "conversas"} em espera</p>
+			{chats.map(chat => (
+				<QueueCard
+					key={chat.id}
+					chat={chat}
+					onAssume={handleAssume}
+					onClose={handleClose}
+				/>
 			))}
 		</div>
 	);
