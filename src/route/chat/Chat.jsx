@@ -9,19 +9,20 @@ import Footer  from "./footer/Footer.jsx";
 
 function ChatInner() {
 	const { socket, connected, error } = useSocket();
-	const [replyTo, setReplyTo] = useState(null);
+	const [replyTo, setReplyTo]           = useState(null);
+	const [conversationId, setConversationId] = useState(null);
 
 	if (!socket) return <Load />;
 	return (
 		<div className="flex flex-col h-dvh bg-zinc-950 overflow-hidden">
-			<Header socket={socket} />
+			<Header socket={socket} onConversationId={setConversationId} />
 			{!connected && !error && <Load />}
 			{connected && (
-				<Messages socket={socket} replyTo={replyTo} setReplyTo={setReplyTo} />
+				<Messages socket={socket} replyTo={replyTo} setReplyTo={setReplyTo} onConversationId={setConversationId} />
 			)}
 			{error && <Error />}
 			{replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
-			<Footer socket={socket} replyTo={replyTo} setReplyTo={setReplyTo} />
+			<Footer socket={socket} replyTo={replyTo} setReplyTo={setReplyTo} conversationId={conversationId} />
 		</div>
 	);
 }

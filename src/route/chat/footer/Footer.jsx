@@ -18,11 +18,11 @@ function MetaWindowExpired() {
 	);
 }
 
-export default function Footer({ socket, replyTo, setReplyTo }) {
+export default function Footer({ socket, replyTo, setReplyTo, conversationId }) {
 	const { replyWindow, windowState } = useReplyWindow(socket);
 	const isMetaExpired = windowState?.provider === "meta" && !replyWindow;
 
 	if (isMetaExpired) return <MetaWindowExpired />;
 
-	return <ChatComposer socket={socket} replyTo={replyTo} setReplyTo={setReplyTo} />;
+	return <ChatComposer socket={socket} replyTo={replyTo} setReplyTo={setReplyTo} conversationId={conversationId} />;
 }

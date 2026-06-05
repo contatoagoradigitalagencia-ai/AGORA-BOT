@@ -146,7 +146,7 @@ export function ReplyBar({ replyTo, onCancel }) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function Messages({ socket, replyTo, setReplyTo }) {
+export default function Messages({ socket, replyTo, setReplyTo, onConversationId }) {
 	const { phone } = useParams();
 	const isGroup = phone?.includes("-group") || phone?.includes("@g.us");
 	const { messages, setMessages, error, loadMore, hasMore, loadingMore } = useLoadMessages(socket, phone);

@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
  * @param {Object} socket SOCKET DE CONEXAO COM O BACK END
  * @param {String} phone NUMERO DO CONTATO
  */
-export function useGetContact(socket, phone) {
+export function useGetContact(socket, phone, props) {
 	const [contact, setContact] = useState(null);
 	const [loading, setLoading] = useState(true);
 
@@ -16,6 +16,9 @@ export function useGetContact(socket, phone) {
 			if (!res || res.error) return ;
 			setContact(res);
 			setLoading(false);
+			if (res.conversationId && props?.onConversationId) {
+				props.onConversationId(res.conversationId);
+			}
 		});
 	}, [socket]);
 	return ({ contact, setContact, loading });

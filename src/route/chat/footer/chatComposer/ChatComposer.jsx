@@ -1,3 +1,4 @@
+import MediaUpload from "./options/MediaUpload.jsx";
 import { useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -62,7 +63,7 @@ function handleKeyDown(phone, element, socket, message, setMessage, textareaRef,
  * @brief COMPONENTE RESPONSAVEL POR GERAR O CAMPO DE DIGITACAO DA MENSAGEM E BOTAO DE ENVIAR
  * @param {Object} socket SOCKET DE CONEXAO COM O BACK END
 */
-export default function ChatComposer({ socket, replyTo, setReplyTo }) {
+export default function ChatComposer({ socket, replyTo, setReplyTo, conversationId }) {
 	const { phone } = useParams();
 	const [message, setMessage] = useState("");
 	const textareaRef = useRef(null);
