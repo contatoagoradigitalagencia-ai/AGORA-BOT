@@ -1,44 +1,40 @@
 import { memo } from "react";
 
-/**
- * @author VAMPETA
- * @brief RENDERIZA MENSAGEM DE CONTATO
- * @param {Object} message MENSAGEM A SER RENDERIZADA
-*/
 const Contacts = memo(function Contacts({ message }) {
+	const contacts = message?.data?.contacts;
+	if (!contacts?.length) return <p className="text-xs text-zinc-500 italic">[contato]</p>;
+	const contact = contacts[0];
+	const name  = contact?.name?.formatted_name || "Contato";
+	const phones = contact?.phones || [];
+	const emails = contact?.emails || [];
+
 	return (
-		<div className="p-3 bg-orange-500 text-white rounded w-[70vw] max-w-xs">
-			<div className="flex items-center gap-3 ml-2 mb-3">
-				<div className="flex flex-col overflow-hidden">
-					<p className="font-semibold truncate">{message.data.contacts[0].name.formatted_name}</p>
-					{message.data.contacts[0]?.org?.company && (<p className="text-xs text-gray-100 truncate">{message.data.contacts[0].org.company}</p>)}
+		<div className="p-3 bg-orange-500 text-white rounded-xl w-[260px]">
+			<div className="flex items-center gap-2 mb-3">
+				<i className="bi bi-person-circle text-2xl" />
+				<div className="overflow-hidden">
+					<p className="font-semibold truncate">{name}</p>
+					{contact?.org?.company && <p className="text-xs text-orange-100 truncate">{contact.org.company}</p>}
 				</div>
 			</div>
-			<div className="border-t border-white my-2" />
-			<div className="flex flex-col gap-6">
-				{(message.data.contacts[0].phones) ? (
-					<div className="flex flex-col gap-2">
-						<p>Telefone:</p>
-						{message.data.contacts[0].phones?.map((phone, i) => (
-							<a className="flex items-center gap-2 text-sm hover:text-blue-300 transition" key={i} href={`tel:${phone.phone}`}>
-								<i className="bi bi-telephone text-base" />
-								{phone.phone}
-							</a>
-						))}
-					</div>
-				) : null}
-				{(message.data.contacts[0].emails) ? (
-					<div className="flex flex-col gap-2">
-						<p>Email:</p>
-						{message.data.contacts[0].emails?.map((email, i) => (
-							<a className="flex items-center gap-2 text-sm hover:text-blue-300 transition" key={i} href={`mailto:${email.email}`}>
-								<i className="bi bi-envelope text-base" />
-								{email.email}
-							</a>
-						))}
-					</div>
-				) : null}
-			</div>
+			{phones.length > 0 && (
+				<div className="flex flex-col gap-1 border-t border-orange-400 pt-2">
+					{phones.map((p, i) => (
+						<a key={i} className="flex items-center gap-2 text-xs hover:text-orange-200 transition" href={`tel:${p?.phone}`}>
+							<i className="bi bi-telephone" />{p?.phone}
+						</a>
+					))}
+				</div>
+			)}
+			{emails.length > 0 && (
+				<div className="flex flex-col gap-1 border-t border-orange-400 pt-2 mt-1">
+					{emails.map((e, i) => (
+						<a key={i} className="flex items-center gap-2 text-xs hover:text-orange-200 transition" href={`mailto:${e?.email}`}>
+							<i className="bi bi-envelope" />{e?.email}
+						</a>
+					))}
+				</div>
+			)}
 		</div>
 	);
 });

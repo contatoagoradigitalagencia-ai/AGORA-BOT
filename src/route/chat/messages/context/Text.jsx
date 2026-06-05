@@ -1,13 +1,9 @@
-/**
- * @author VAMPETA
- * @brief RENDERIZA O CONTEUDO DA MENSAGEM (OU PARTE DELE DEPENDENDO DO TIPO DE MENSAGEM)
- * @param {Object} context MENSAGEM RESPONDIDA
-*/
 export default function Text({ context }) {
-	if (!context?.wamid) return (null);
+	if (!context?.wamid) return null;
+	const body = context?.data?.text?.body || context?.text || "Texto";
 	return (
 		<a className="flex items-center gap-1" href={"#" + context.wamid}>
-			<p className="text-white">{context.data.text.body}</p>
+			<p className="text-white text-xs truncate">{body}</p>
 		</a>
 	);
 }

@@ -1,54 +1,30 @@
 import { formatDate } from "../../../utils/functions/formatDate.js";
 
-/**
- * @author VAMPETA
- * @brief CRIA O ICONE DE STATUS DE VIZUALIZACAO DE MENSAGEM
- * @param {String} status STATUS DE VISUALIZACAO DA MENSAGEM
-*/
 function Visualization({ status }) {
-	switch (status) {
-		case "sending":
-			return (<i className="bi bi-clock ml-2 leading-none text-xs text-gray-700"/>);
-		case "sent":
-			return (<i className="bi bi-check ml-2 leading-none text-xl text-gray-700"/>);
-		case "delivered":
-			return (<i className="bi bi-check-all ml-2 leading-none text-xl text-gray-700"/>);
-		case "read":
-			return (<i className="bi bi-check-all ml-2 leading-none text-xl text-blue-700"/>);
-		case "played":
-			return (<i className="bi bi-check-all ml-2 leading-none text-xl text-blue-700"/>);
-		case "failed":
-			return (<i className="bi bi-exclamation-triangle-fill ml-2 leading-none text-xl text-yellow-500"/>);
-		default:
-			return (<i className="bi bi-x-circle-fill ml-2 leading-none text-xl text-red-500"/>);
-	}
+	const map = {
+		sending:   <i className="bi bi-clock ml-2 text-xs text-gray-500" />,
+		sent:      <i className="bi bi-check ml-2 text-base text-gray-500" />,
+		delivered: <i className="bi bi-check-all ml-2 text-base text-gray-500" />,
+		read:      <i className="bi bi-check-all ml-2 text-base text-blue-500" />,
+		played:    <i className="bi bi-check-all ml-2 text-base text-blue-500" />,
+		failed:    <i className="bi bi-exclamation-triangle-fill ml-2 text-base text-yellow-500" />,
+	};
+	return map[status] || null;
 }
 
-/**
- * @author VAMPETA
- * @brief COMPONENTE QUE CONTEM DATA HORA DE ENVIO DA MENSAGEM E CASO SEJA UMA MENSAGEM ENVIADA PELO BOT E ADICIONADO O STATUS DE VISUALIZACAO
- * @param {Object} message DADOS DA MENSAGEM
-*/
 export default function FooterMessage({ message }) {
-	if (message.data?.audio) {
-		return (
-			<div className="flex justify-between items-center">
-				{(message.data.audio.voice === true) ? (
-					<i className={`bi bi-mic-fill ${(message.status === "played") ? "text-blue-600" : "text-gray-700"}`} />
-				) : (
-					<i className="bi bi-music-note-beamed text-gray-700" />
-				)}
-				<div className="flex items-center justify-end mt-1">
-					<span className="text-xs text-gray-700">{formatDate(message.timestamp)}</span>
-					{message.status && <Visualization status={message.status} />}
-				</div>
-			</div>
-		);
-	}
+	const isAudio = message?.data?.type === "audio" || message?.type === "audio";
+	const isVoice = message?.data?.audio?.voice === true;
+
 	return (
-		<div className="flex items-center justify-end mt-1">
-			<span className="text-xs text-gray-700">{formatDate(message.timestamp)}</span>
-			{message.status && <Visualization status={message.status} />}
+		<div className={`flex ${isAudio ? "justify-between" : "justify-end"} items-center mt-1`}>
+			{isAudio && (
+				<i className={`bi ${isVoice ? "bi-mic-fill" : "bi-music-note-beamed"} text-xs ${message?.status === "played" ? "text-blue-400" : "text-gray-400"}`} />
+			)}
+			<div className="flex items-center gap-0.5">
+				<span className="text-xs text-gray-400">{formatDate(message?.timestamp || message?.occurredAt)}</span>
+				{message?.status && <Visualization status={message.status} />}
+			</div>
 		</div>
 	);
 }

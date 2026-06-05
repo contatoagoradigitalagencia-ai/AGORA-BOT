@@ -1,18 +1,11 @@
 import { memo, useMemo } from "react";
-
 import { formattedText } from "../../../utils/components/formattedString.jsx";
 
-/**
- * @author VAMPETA
- * @brief RENDERIZA MENSAGEM DE TEXTO
- * @param {Object} message MENSAGEM A SER RENDERIZADA
-*/
 const Text = memo(function Text({ message }) {
-	const text = useMemo(() => formattedText(message.data.text.body), [message.data.text.body]);
-
-	return (
-		<p>{text}</p>
-	);
+	const body = message?.data?.text?.body ?? message?.text ?? "";
+	const text = useMemo(() => body ? formattedText(body) : null, [body]);
+	if (!text) return null;
+	return <p className="whitespace-pre-wrap break-words text-sm">{text}</p>;
 });
 
 export default Text;
