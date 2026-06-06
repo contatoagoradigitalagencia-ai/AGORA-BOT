@@ -29,6 +29,7 @@ import TermsOfUSe from "./route/terms of use/TermsOfUse.jsx";
 import PrivacyPolicy from "./route/privacy policy/PrivacyPolicy.jsx";
 import Support from "./route/support/Support.jsx";
 import Attendants from "./route/attendants/Attendants.jsx";
+import Connect from "./route/connect/Connect.jsx";
 import Admin from "./route/admin/Admin.jsx";
 import NotFound from "./route/NotFound/NotFound.jsx";
 
@@ -76,6 +77,7 @@ createRoot(document.getElementById("root")).render(
 							<Route path="/privacy-policy" element={<ProtectedRoute><PrivacyPolicy /></ProtectedRoute>} />
 							<Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
 							<Route path="/attendants" element={<ProtectedRoute><Attendants /></ProtectedRoute>} />
+							<Route path="/connect" element={<ProtectedRoute><Connect /></ProtectedRoute>} />
 							<Route path="/admin" element={<ProtectedRoute roles={["owner", "admin"]}><ErrorBoundary><Admin /></ErrorBoundary></ProtectedRoute>} />
 							<Route path="*" element={<NotFound />} />
 						</Routes>

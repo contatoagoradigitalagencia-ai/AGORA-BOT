@@ -26,6 +26,10 @@ function SidebarContent({ close }) {
 						<i className="bi bi-clipboard-data text-xl" />
 						<span>Dashboard</span>
 					</Link>
+					<Link className={`flex items-center gap-1 px-4 py-2 rounded-lg ${(location.pathname === "/connect") ? "bg-orange-500 text-black" : "hover:bg-zinc-800"}`} to="/connect" onClick={close}>
+						<i className="bi bi-qr-code text-xl" />
+						<span>Conectar WhatsApp</span>
+					</Link>
 					{canAccessAdmin && (
 						<Link className={`flex items-center gap-1 px-4 py-2 rounded-lg ${(location.pathname === "/admin") ? "bg-orange-500 text-black" : "hover:bg-zinc-800"}`} to="/admin" onClick={close}>
 							<i className="bi bi-shield-lock text-xl" />
