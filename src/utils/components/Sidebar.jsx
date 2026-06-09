@@ -60,6 +60,10 @@ function SidebarContent({ close }) {
 						<i className="bi bi-people text-xl" />
 						<span>Atendentes</span>
 					</Link>
+					<Link className={`flex items-center gap-1 px-4 py-2 rounded-lg ${(location.pathname === "/connect") ? "bg-orange-500 text-black" : "hover:bg-zinc-800"}`} to="/connect" onClick={close}>
+						<i className="bi bi-qr-code text-xl" />
+						<span>Conectar WhatsApp</span>
+					</Link>
 					<Link className={`flex items-center gap-1 px-4 py-2 rounded-lg ${(location.pathname === "/spreadsheets") ? "bg-orange-500 text-black" : "hover:bg-zinc-800"}`} to="/spreadsheets" onClick={close}>
 						<i className="bi bi-box-seam text-xl" />
 						<span>Catalogo</span>

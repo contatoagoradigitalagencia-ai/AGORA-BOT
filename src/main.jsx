@@ -22,6 +22,7 @@ import Contacts from "./route/contacts/Contacts.jsx";
 import QuickMessages from "./route/quick messages/QuickMessages.jsx";
 import QuickMessagesType from "./route/quick messages type/QuickMessagesType.jsx";
 import Bot from "./route/bot/Bot.jsx";
+import Connect from "./route/connect/Connect.jsx";
 import Spreadsheets from "./route/spreadsheets/Spreadsheets.jsx";
 import Settings from "./route/settings/Settings.jsx";
 import Guide from "./route/guide/Guide.jsx";
@@ -70,6 +71,7 @@ createRoot(document.getElementById("root")).render(
 							<Route path="/quick-messages" element={<ProtectedRoute><QuickMessages /></ProtectedRoute>} />
 							<Route path="/quick-messages/:type" element={<ProtectedRoute><QuickMessagesType /></ProtectedRoute>} />
 							<Route path="/bot" element={<ProtectedRoute><Bot /></ProtectedRoute>} />
+							<Route path="/connect" element={<ProtectedRoute><Connect /></ProtectedRoute>} />
 							<Route path="/spreadsheets" element={<ProtectedRoute><Spreadsheets /></ProtectedRoute>} />
 							<Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 							<Route path="/guide" element={<ProtectedRoute><Guide /></ProtectedRoute>} />
